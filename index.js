@@ -104,10 +104,14 @@ Never sound robotic.
 
 });
 
-client.login(process.env.DISCORD_TOKEN)
-  .then(() => {
-    console.log('Discord bot logged in!');
-  })
-  .catch((err) => {
-    console.error('Discord login failed:', err);
-  });
+console.log('Attempting Discord login...');
+
+client.login(process.env.DISCORD_TOKEN);
+
+client.on('error', (error) => {
+  console.error('Discord Client Error:', error);
+});
+
+process.on('unhandledRejection', error => {
+  console.error('Unhandled promise rejection:', error);
+});
