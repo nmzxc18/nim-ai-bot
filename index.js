@@ -64,7 +64,7 @@ client.on('messageCreate', async (message) => {
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'meta-llama/llama-3-8b-instruct:free',
+        model: 'microsoft/phi-3-mini-128k-instruct:free',
 
         messages: [
           {
