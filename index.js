@@ -1,5 +1,16 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const axios = require('axios');
+const express = require('express');
+
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Nim AI Bot is alive!');
+});
+
+app.listen(3000, () => {
+  console.log('Server running');
+});
 
 const client = new Client({
   intents: [
@@ -20,7 +31,7 @@ client.on('messageCreate', async (message) => {
 
   if (message.author.bot) return;
 
-  const isDM = message.channel.type === 1;
+  const isDM = message.guild === null;
 
   if (!isDM) return;
 
@@ -88,7 +99,7 @@ Never sound robotic.
 
     console.log(error);
 
-    message.reply('kalma gay nag-iisip pa ako');
+    message.reply('lutang ako wait 😭');
   }
 
 });
