@@ -22,7 +22,9 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.DirectMessages
+    GatewayIntentBits.DirectMessages,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildPresences
   ],
 
   partials: [
@@ -115,7 +117,13 @@ Never sound robotic.
 
 console.log('Attempting Discord login...');
 
-client.login(process.env.DISCORD_TOKEN);
+client.login(process.env.DISCORD_TOKEN)
+  .then(() => {
+    console.log('LOGIN SUCCESS');
+  })
+  .catch((err) => {
+    console.error('LOGIN ERROR:', err);
+  });
 
 client.on('error', (error) => {
   console.error('Discord Client Error:', error);
