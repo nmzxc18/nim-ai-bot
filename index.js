@@ -64,7 +64,7 @@ client.on('messageCreate', async (message) => {
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'mistralai/mistral-7b-instruct:free',
+        model: 'meta-llama/llama-3-8b-instruct:free',
 
         messages: [
           {
@@ -108,7 +108,7 @@ Never sound robotic.
 
   } catch (error) {
 
-    console.error(error);
+    console.error(error.response?.data || error.message);
 
     await message.reply('lutang ako wait 😭');
   }
