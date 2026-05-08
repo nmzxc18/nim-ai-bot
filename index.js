@@ -1,0 +1,96 @@
+const { Client, GatewayIntentBits } = require('discord.js');
+const axios = require('axios');
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.DirectMessages
+  ]
+});
+
+const memory = {};
+
+client.on('ready', () => {
+  console.log(`Logged in as ${client.user.tag}`);
+});
+
+client.on('messageCreate', async (message) => {
+
+  if (message.author.bot) return;
+
+  const isDM = message.channel.type === 1;
+
+  if (!isDM) return;
+
+  try {
+
+    await message.channel.sendTyping();
+
+    const userId = message.author.id;
+
+    if (!memory[userId]) {
+      memory[userId] = [];
+    }
+
+    memory[userId].push({
+      role: 'user',
+      content: message.content
+    });
+
+    const response = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: 'mistralai/mistral-7b-instruct:free',
+
+        messages: [
+          {
+            role: 'system',
+            content: `
+You are Nim AI.
+
+You are a sweet online friend.
+Speak casual Tagalog-English.
+Sound human and natural.
+Be funny and supportive.
+Keep replies realistic and short.
+Never sound robotic.
+`
+          },
+
+          ...memory[userId]
+        ]
+      },
+
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const reply = response.data.choices[0].message.content;
+
+    memory[userId].push({
+      role: 'assistant',
+      content: reply
+    });
+
+    if (memory[userId].length > 20) {
+      memory[userId] = memory[userId].slice(-20);
+    }
+
+    message.reply(reply);
+
+  } catch (error) {
+
+    console.log(error);
+
+    message.reply('kalma gay nag-iisip pa ako');
+  }
+
+});
+
+client.login(process.env.DISCORD_TOKEN);
