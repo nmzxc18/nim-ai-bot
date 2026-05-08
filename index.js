@@ -97,14 +97,14 @@ Never sound robotic.
 
   } catch (error) {
 
-    console.log(error);
+    console.error(error);
 
     message.reply('lutang ako wait 😭');
   }
 
 });
 
-client.login('MTUwMjM1NTA2MTU4MDM2OTkyMA.GRu7BE.M2045G-3PIlG4MrrV8q1uvX1nkzLR0C-ZiCxcA')
+client.login(process.env.DISCORD_TOKEN)
   .then(() => {
     console.log('Discord bot logged in!');
   })
