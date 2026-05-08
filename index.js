@@ -110,7 +110,7 @@ Never sound robotic.
 
     console.error(error.response?.data || error.message);
 
-    await message.reply('lutang ako wait 😭');
+    await message.reply('wait lang gay, di ko gay alam sagot dyan');
   }
 
 });
