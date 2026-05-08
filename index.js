@@ -1,14 +1,11 @@
 const {
   Client,
   GatewayIntentBits,
-  Partials,
-  EmbedBuilder
+  Partials
 } = require('discord.js');
 
 const axios = require('axios');
 const express = require('express');
-const cron = require('node-cron');
-const cheerio = require('cheerio');
 
 const app = express();
 
@@ -38,13 +35,9 @@ const client = new Client({
 
 const memory = {};
 
-let latestUpdateTitle = '';
-
 client.once('ready', () => {
 
   console.log(`Logged in as ${client.user.tag}`);
-
-  startOnceHumanTracker();
 });
 
 client.on('messageCreate', async (message) => {
@@ -151,74 +144,6 @@ Rules:
   }
 
 });
-
-async function checkOnceHumanUpdates() {
-
-  try {
-
-    const url = 'https://www.oncehuman.game/news/update/';
-
-    const response = await axios.get(url);
-
-    const $ = cheerio.load(response.data);
-
-    const firstArticle = $('a').first();
-
-    const title = firstArticle.text().trim();
-
-    const link = firstArticle.attr('href');
-
-    if (!title || title === latestUpdateTitle) {
-      return;
-    }
-
-    latestUpdateTitle = title;
-
-    const princess = await client.users.fetch(PRINCESS_ID);
-
-    const embed = new EmbedBuilder()
-      .setTitle('🌌 Once Human Update Detected')
-      .setDescription(
-        `Hello, Mahal na Prinsesa.\n\nA new Once Human update has been detected.\n\n✨ ${title}`
-      )
-      .setColor(0x8e44ad)
-      .setImage('https://www.oncehuman.game/img/share.jpg')
-      .addFields({
-        name: '🔗 Official Update Link',
-        value: link.startsWith('http')
-          ? link
-          : `https://www.oncehuman.game${link}`
-      })
-      .setFooter({
-        text: 'Nim AI • Watching Once Human updates'
-      });
-
-    await princess.send({
-      embeds: [embed]
-    });
-
-    console.log('Once Human update sent.');
-
-  } catch (error) {
-
-    console.error(
-      'Once Human tracker error:',
-      error.message
-    );
-  }
-}
-
-function startOnceHumanTracker() {
-
-  console.log('Once Human tracker started.');
-
-  checkOnceHumanUpdates();
-
-  cron.schedule('*/30 * * * *', () => {
-
-    checkOnceHumanUpdates();
-  });
-}
 
 console.log('Attempting Discord login...');
 
