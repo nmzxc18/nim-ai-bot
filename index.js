@@ -1,4 +1,9 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const {
+  Client,
+  GatewayIntentBits,
+  Partials
+} = require('discord.js');
+
 const axios = require('axios');
 const express = require('express');
 
@@ -18,12 +23,16 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.DirectMessages
+  ],
+
+  partials: [
+    Partials.Channel
   ]
 });
 
 const memory = {};
 
-client.on('ready', () => {
+client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
@@ -93,13 +102,13 @@ Never sound robotic.
       memory[userId] = memory[userId].slice(-20);
     }
 
-    message.reply(reply);
+    await message.reply(reply);
 
   } catch (error) {
 
     console.error(error);
 
-    message.reply('lutang ako wait 😭');
+    await message.reply('lutang ako wait 😭');
   }
 
 });
