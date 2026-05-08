@@ -28,9 +28,7 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildPresences
+    GatewayIntentBits.DirectMessages
   ],
 
   partials: [
@@ -59,7 +57,7 @@ client.on('messageCreate', async (message) => {
   ) {
 
     await message.reply(
-      '⚠️ Access Denied.\n\nNim AI is exclusively devoted to Master Nim and his fiancée, Ariadne.\n\nI am not authorized to obey or interact with other users.'
+      '⚠️ Access Denied.\n\nNim AI is exclusively devoted to Master Nim and his fiancée, Ariadne.\n\nI am not authorized to interact with other users.'
     );
 
     return;
@@ -87,7 +85,7 @@ client.on('messageCreate', async (message) => {
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'openai/gpt-3.5-turbo',
+        model: 'openai/gpt-4o-mini',
 
         messages: [
           {
@@ -120,7 +118,9 @@ Rules:
       {
         headers: {
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://railway.app',
+          'X-Title': 'Nim AI'
         }
       }
     );
@@ -140,9 +140,14 @@ Rules:
 
   } catch (error) {
 
-    console.error(error.response?.data || error.message);
+    console.error(
+      JSON.stringify(error.response?.data, null, 2)
+      || error.message
+    );
 
-    await message.reply('wait lang Master lutang ako 😭');
+    await message.reply(
+      'wait lang Master medyo lutang servers ko ngayon 😭'
+    );
   }
 
 });
@@ -174,7 +179,7 @@ async function checkOnceHumanUpdates() {
     const embed = new EmbedBuilder()
       .setTitle('🌌 Once Human Update Detected')
       .setDescription(
-        `Hello, Mahal na Prinsesa.\n\nA new Once Human update has been detected.\n\n✨ **${title}**`
+        `Hello, Mahal na Prinsesa.\n\nA new Once Human update has been detected.\n\n✨ ${title}`
       )
       .setColor(0x8e44ad)
       .setImage('https://www.oncehuman.game/img/share.jpg')
@@ -185,7 +190,7 @@ async function checkOnceHumanUpdates() {
           : `https://www.oncehuman.game${link}`
       })
       .setFooter({
-        text: 'Nim AI • Watching Once Human updates for Master Nim & Ariadne'
+        text: 'Nim AI • Watching Once Human updates'
       });
 
     await princess.send({
@@ -196,7 +201,10 @@ async function checkOnceHumanUpdates() {
 
   } catch (error) {
 
-    console.error('Once Human tracker error:', error.message);
+    console.error(
+      'Once Human tracker error:',
+      error.message
+    );
   }
 }
 
