@@ -104,4 +104,10 @@ Never sound robotic.
 
 });
 
-client.login(process.env.DISCORD_TOKEN);
+client.login('MTUwMjM1NTA2MTU4MDM2OTkyMA.GRu7BE.M2045G-3PIlG4MrrV8q1uvX1nkzLR0C-ZiCxcA')
+  .then(() => {
+    console.log('Discord bot logged in!');
+  })
+  .catch((err) => {
+    console.error('Discord login failed:', err);
+  });
