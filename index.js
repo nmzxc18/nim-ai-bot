@@ -109,24 +109,24 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
     // ONLY THESE
     const includeKeywords = [
-      'shop',
-      'fashion',
-      'cosmetic',
-      'skin',
-      'skins',
-      'outfit',
-      'appearance',
-      'crate',
-      'makeup',
-      'vehicle skin',
-      'premium pass',
-      'meta pass',
-      'clothing',
-      'bundle',
-      'gun skin',
-      'weapon skin',
-      'set'
-    ];
+  'shop',
+  'fashion',
+  'cosmetic',
+  'skin',
+  'skins',
+  'outfit',
+  'crate',
+  'makeup',
+  'vehicle skin',
+  'premium pass',
+  'meta pass',
+  'clothing',
+  'bundle',
+  'gun skin',
+  'weapon skin',
+  'lightforge',
+  'loot crate'
+];
 
     // IGNORE THESE
     const excludeKeywords = [
