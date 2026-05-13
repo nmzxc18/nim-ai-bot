@@ -97,16 +97,21 @@ async function sendOnceHumanUpdate(forceSend = false) {
       content = content.slice(0, 3500) + '...';
     }
 
-    // TRY TO GET IMAGE
+    // GET REAL IMAGE FROM STEAM ARTICLE
     let imageUrl =
-      'https://www.oncehuman.game/img/share.jpg';
+      'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2139460/header.jpg';
 
     const imageMatch =
       latest.content?.match(
-        /https?:\/\/.*\.(?:png|jpg|jpeg|webp)/i
+        /https?:\/\/[^\s"]+\.(?:png|jpg|jpeg|webp)/i
       );
 
-    if (imageMatch) {
+    if (
+      imageMatch &&
+      imageMatch[0] &&
+      imageMatch[0].length < 2000
+    ) {
+
       imageUrl = imageMatch[0];
     }
 
