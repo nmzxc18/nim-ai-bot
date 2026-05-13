@@ -1,8 +1,7 @@
 const {
   Client,
   GatewayIntentBits,
-  Partials,
-  EmbedBuilder
+  Partials
 } = require('discord.js');
 
 const axios = require('axios');
@@ -80,10 +79,21 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
     lastOnceHumanTitle = latest.title;
 
-    let content = latest.content || '';
+    const rawHTML = latest.content || '';
 
-    // CLEAN HTML
-    content = content
+    // EXTRACT ALL IMAGE URLS
+    const imageMatches = [
+      ...rawHTML.matchAll(
+        /https?:\/\/[^\s"]+\.(?:png|jpg|jpeg|webp)/gi
+      )
+    ];
+
+    const imageUrls = imageMatches
+      .map(match => match[0])
+      .filter(url => url.length < 2000);
+
+    // CLEAN ARTICLE TEXT
+    let cleanText = rawHTML
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<\/p>/gi, '\n\n')
       .replace(/<li>/gi, '• ')
@@ -92,38 +102,10 @@ async function sendOnceHumanUpdate(forceSend = false) {
       .replace(/\n\s*\n/g, '\n\n')
       .trim();
 
-    // SHORTEN
-    if (content.length > 3500) {
-      content = content.slice(0, 3500) + '...';
-    }
-
-    // GET REAL IMAGE FROM STEAM ARTICLE
-    let imageUrl =
-      'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2139460/header.jpg';
-
-    const imageMatch =
-      latest.content?.match(
-        /https?:\/\/[^\s"]+\.(?:png|jpg|jpeg|webp)/i
-      );
-
-    if (
-      imageMatch &&
-      imageMatch[0] &&
-      imageMatch[0].length < 2000
-    ) {
-
-      imageUrl = imageMatch[0];
-    }
-
-    const embed = new EmbedBuilder()
-      .setColor('#8e44ad')
-      .setTitle(`🌌 ${latest.title}`)
-      .setURL(latest.link)
-      .setDescription(content)
-      .setImage(imageUrl)
-      .setFooter({
-        text: 'Nim AI • Once Human Tracker'
-      });
+    // SPLIT INTO SECTIONS
+    const sections = cleanText
+      .split('\n\n')
+      .filter(x => x.trim().length > 20);
 
     for (const id of USERS) {
 
@@ -132,9 +114,26 @@ async function sendOnceHumanUpdate(forceSend = false) {
         const user =
           await client.users.fetch(id);
 
-        await user.send({
-          embeds: [embed]
-        });
+        // TITLE
+        await user.send(
+          `🌌 **${latest.title}**\n${latest.link}`
+        );
+
+        // ARTICLE FLOW
+        for (let i = 0; i < sections.length; i++) {
+
+          const part = sections[i];
+
+          if (part.length > 1900) continue;
+
+          await user.send(part);
+
+          // SEND MATCHING IMAGE
+          if (imageUrls[i]) {
+
+            await user.send(imageUrls[i]);
+          }
+        }
 
       } catch (err) {
 
@@ -146,7 +145,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
     }
 
     console.log(
-      'Once Human update sent successfully.'
+      'Once Human article-style update sent successfully.'
     );
 
   } catch (error) {
