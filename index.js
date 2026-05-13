@@ -53,6 +53,9 @@ client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
   startOnceHumanTracker();
+
+  // TEST SEND CURRENT UPDATE ON STARTUP
+  await sendOnceHumanUpdate(true);
 });
 
 async function sendOnceHumanUpdate(forceSend = false) {
@@ -67,6 +70,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
     if (!latest) return;
 
+    // ANTI SPAM
     if (
       latest.title === lastOnceHumanTitle &&
       !forceSend
@@ -76,20 +80,42 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
     lastOnceHumanTitle = latest.title;
 
-    const articleHTML = latest.content || 'No content found.';
+    let content = latest.content || '';
 
-    const cleanedContent = articleHTML
+    // CLEAN HTML
+    content = content
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<li>/gi, '• ')
+      .replace(/<\/li>/gi, '\n')
       .replace(/<[^>]*>/g, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 3500);
+      .replace(/\n\s*\n/g, '\n\n')
+      .trim();
+
+    // SHORTEN
+    if (content.length > 3500) {
+      content = content.slice(0, 3500) + '...';
+    }
+
+    // TRY TO GET IMAGE
+    let imageUrl =
+      'https://www.oncehuman.game/img/share.jpg';
+
+    const imageMatch =
+      latest.content?.match(
+        /https?:\/\/.*\.(?:png|jpg|jpeg|webp)/i
+      );
+
+    if (imageMatch) {
+      imageUrl = imageMatch[0];
+    }
 
     const embed = new EmbedBuilder()
+      .setColor('#8e44ad')
       .setTitle(`🌌 ${latest.title}`)
       .setURL(latest.link)
-      .setDescription(cleanedContent || 'New Once Human update detected.')
-      .setColor('#8e44ad')
-      .setImage('https://www.oncehuman.game/img/share.jpg')
+      .setDescription(content)
+      .setImage(imageUrl)
       .setFooter({
         text: 'Nim AI • Once Human Tracker'
       });
@@ -98,7 +124,8 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
       try {
 
-        const user = await client.users.fetch(id);
+        const user =
+          await client.users.fetch(id);
 
         await user.send({
           embeds: [embed]
@@ -128,7 +155,9 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
 function startOnceHumanTracker() {
 
-  console.log('Once Human tracker started.');
+  console.log(
+    'Once Human tracker started.'
+  );
 
   // CHECK EVERY 30 MINUTES
   setInterval(async () => {
@@ -159,10 +188,14 @@ client.on('messageCreate', async (message) => {
 
   if (!isDM) return;
 
-  const lowerMsg = message.content.toLowerCase();
+  const lowerMsg =
+    message.content.toLowerCase();
 
   // FORCE TEST COMMAND
-  if (lowerMsg === '!oncehuman') {
+  if (
+    lowerMsg.includes('once human') ||
+    lowerMsg === '!oncehuman'
+  ) {
 
     await sendOnceHumanUpdate(true);
 
@@ -177,7 +210,8 @@ client.on('messageCreate', async (message) => {
 
     await message.channel.sendTyping();
 
-    const userId = message.author.id;
+    const userId =
+      message.author.id;
 
     if (!memory[userId]) {
       memory[userId] = [];
@@ -188,15 +222,16 @@ client.on('messageCreate', async (message) => {
       content: message.content
     });
 
-    const response = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
-        model: 'openrouter/auto',
+    const response =
+      await axios.post(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          model: 'openrouter/auto',
 
-        messages: [
-          {
-            role: 'system',
-            content: `
+          messages: [
+            {
+              role: 'system',
+              content: `
 You are Nim AI.
 
 You are a casual Discord friend.
@@ -221,34 +256,46 @@ Users:
 
 Mention their titles only sometimes.
 `
-          },
+            },
 
-          ...memory[userId]
-        ]
-      },
+            ...memory[userId]
+          ]
+        },
 
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://railway.app',
-          'X-Title': 'Nim AI'
+        {
+          headers: {
+            Authorization:
+              `Bearer ${process.env.OPENROUTER_API_KEY}`,
+
+            'Content-Type':
+              'application/json',
+
+            'HTTP-Referer':
+              'https://railway.app',
+
+            'X-Title':
+              'Nim AI'
+          }
         }
-      }
-    );
+      );
 
     const reply =
-      response.data.choices[0].message.content;
+      response.data
+        .choices[0]
+        .message.content;
 
     memory[userId].push({
       role: 'assistant',
       content: reply
     });
 
-    if (memory[userId].length > 20) {
+    if (
+      memory[userId].length > 20
+    ) {
 
       memory[userId] =
-        memory[userId].slice(-20);
+        memory[userId]
+          .slice(-20);
     }
 
     await message.reply(reply);
@@ -270,29 +317,43 @@ Mention their titles only sometimes.
 
 });
 
-console.log('Attempting Discord login...');
+console.log(
+  'Attempting Discord login...'
+);
 
-client.login(process.env.DISCORD_TOKEN)
+client.login(
+  process.env.DISCORD_TOKEN
+)
   .then(() => {
-    console.log('LOGIN SUCCESS');
+
+    console.log(
+      'LOGIN SUCCESS'
+    );
+
   })
   .catch((err) => {
+
     console.error(
       'LOGIN ERROR:',
       err
     );
   });
 
-client.on('error', (error) => {
-  console.error(
-    'Discord Client Error:',
-    error
-  );
-});
+client.on(
+  'error',
+  (error) => {
+
+    console.error(
+      'Discord Client Error:',
+      error
+    );
+  }
+);
 
 process.on(
   'unhandledRejection',
   error => {
+
     console.error(
       'Unhandled promise rejection:',
       error
