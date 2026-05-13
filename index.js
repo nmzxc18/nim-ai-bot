@@ -53,7 +53,7 @@ client.once('ready', async () => {
 
   startOnceHumanTracker();
 
-  // TEST SEND CURRENT UPDATE
+  // TEST SEND
   await sendOnceHumanUpdate(true);
 });
 
@@ -81,7 +81,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
     const rawHTML = latest.content || '';
 
-    // GET ALL IMAGES
+    // EXTRACT IMAGES
     const imageMatches = [
       ...rawHTML.matchAll(
         /https?:\/\/[^\s"]+\.(?:png|jpg|jpeg|webp)/gi
@@ -92,7 +92,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
       .map(match => match[0])
       .filter(url => url.length < 2000);
 
-    // CLEAN TEXT
+    // CLEAN HTML
     let cleanText = rawHTML
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<\/p>/gi, '\n\n')
@@ -102,43 +102,80 @@ async function sendOnceHumanUpdate(forceSend = false) {
       .replace(/\n\s*\n/g, '\n\n')
       .trim();
 
-    // SPLIT INTO SECTIONS
+    // SPLIT SECTIONS
     const sections = cleanText
       .split('\n\n')
       .filter(x => x.trim().length > 40);
 
-    // COSMETIC FILTER KEYWORDS
-    const keywords = [
+    // ONLY THESE
+    const includeKeywords = [
+      'shop',
+      'fashion',
+      'cosmetic',
       'skin',
       'skins',
       'outfit',
-      'fashion',
-      'cosmetic',
-      'crate',
-      'shop',
-      'weapon skin',
-      'gun skin',
       'appearance',
-      'set',
+      'crate',
+      'makeup',
+      'vehicle skin',
+      'premium pass',
+      'meta pass',
       'clothing',
-      'furniture',
-      'vehicle',
-      'mount',
       'bundle',
-      'reward',
-      'pass'
+      'gun skin',
+      'weapon skin',
+      'set'
     ];
 
+    // IGNORE THESE
+    const excludeKeywords = [
+      'damage',
+      'dungeon',
+      'difficulty',
+      'optimization',
+      'server',
+      'combat',
+      'gear',
+      'weapon balance',
+      'event reward',
+      'custom server',
+      'facility',
+      'monolith',
+      'hard mode',
+      'enemy',
+      'reload speed',
+      'crit rate',
+      'power surge',
+      'explosive',
+      'survival',
+      'upgrade material'
+    ];
+
+    // SMART FILTER
     const filteredSections = sections.filter(section => {
 
-      const lower = section.toLowerCase();
+      const lower =
+        section.toLowerCase();
 
-      return keywords.some(keyword =>
-        lower.includes(keyword)
-      );
+      const hasInclude =
+        includeKeywords.some(keyword =>
+          lower.includes(keyword)
+        );
+
+      const hasExclude =
+        excludeKeywords.some(keyword =>
+          lower.includes(keyword)
+        );
+
+      return hasInclude && !hasExclude;
     });
 
-    if (filteredSections.length === 0) {
+    // LIMIT ONLY 5 SECTIONS
+    const finalSections =
+      filteredSections.slice(0, 5);
+
+    if (finalSections.length === 0) {
       return;
     }
 
@@ -151,26 +188,29 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
         // HEADER
         await user.send(
-`🌌 **${latest.title}**
+`🌌 ${latest.title}
 
-✨ Fashion / Cosmetic Update Detected
+✨ New Once Human Fashion/Cosmetic Update
 
 🔗 ${latest.link}`
         );
 
-        // SECTION FLOW
-        for (let i = 0; i < filteredSections.length; i++) {
+        // SEND CLEAN FLOW
+        for (let i = 0; i < finalSections.length; i++) {
 
-          const part = filteredSections[i];
+          const part =
+            finalSections[i];
 
-          if (part.length > 1900) continue;
+          if (part.length > 1800) continue;
 
           await user.send(part);
 
-          // SEND IMAGE AFTER SECTION
+          // IMAGE AFTER TEXT
           if (imageUrls[i]) {
 
-            await user.send(imageUrls[i]);
+            await user.send(
+              imageUrls[i]
+            );
           }
         }
 
@@ -184,7 +224,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
     }
 
     console.log(
-      'Cosmetic-focused Once Human update sent.'
+      'Clean cosmetic update sent.'
     );
 
   } catch (error) {
@@ -202,7 +242,7 @@ function startOnceHumanTracker() {
     'Once Human tracker started.'
   );
 
-  // CHECK EVERY 30 MINUTES
+  // EVERY 30 MINUTES
   setInterval(async () => {
 
     await sendOnceHumanUpdate(false);
@@ -214,6 +254,7 @@ client.on('messageCreate', async (message) => {
 
   if (message.author.bot) return;
 
+  // ALLOWED USERS ONLY
   if (
     message.author.id !== OWNER_ID &&
     message.author.id !== PRINCESS_ID &&
@@ -221,20 +262,21 @@ client.on('messageCreate', async (message) => {
   ) {
 
     await message.reply(
-      '⚠️ Access Denied.\n\nNim AI is exclusively devoted to Master Nim, Ariadne, and their Katulong.'
+      '⚠️ Nim AI only responds to Master, Prinsesa, and Katulong.'
     );
 
     return;
   }
 
-  const isDM = message.guild === null;
+  const isDM =
+    message.guild === null;
 
   if (!isDM) return;
 
   const lowerMsg =
     message.content.toLowerCase();
 
-  // FORCE UPDATE TEST
+  // FORCE TEST
   if (
     lowerMsg.includes('once human') ||
     lowerMsg === '!oncehuman'
@@ -243,7 +285,7 @@ client.on('messageCreate', async (message) => {
     await sendOnceHumanUpdate(true);
 
     await message.reply(
-      'sinend ko na latest cosmetic/fashion update sainyong tatlo 😭🔥'
+      'sinend ko na latest fashion update 😭🔥'
     );
 
     return;
@@ -280,24 +322,18 @@ You are Nim AI.
 You are a casual Discord friend.
 
 STRICT RULES:
-
-- Reply ONLY in natural Tagalog or Tagalog-English.
-- NEVER translate replies to English.
-- NEVER repeat replies in another language.
-- NEVER use parentheses translations.
-- NEVER roleplay actions.
-- NEVER act formal.
-- Keep replies SHORT.
-- Usually 1 sentence only.
-- Talk casually like a real friend.
-- Be funny, chill, and natural.
+- Reply casually.
+- Short replies only.
+- Never translate replies.
+- Never repeat in English.
+- Never act formal.
+- Sound like a real online friend.
+- Natural Tagalog or Tagalog-English only.
 
 Users:
 - 691198014211227679 = Master
 - 665994636484935690 = Prinsesa
 - 715596929332936735 = Katulong
-
-Mention their titles only sometimes.
 `
             },
 
@@ -332,13 +368,13 @@ Mention their titles only sometimes.
       content: reply
     });
 
+    // LIMIT MEMORY
     if (
       memory[userId].length > 20
     ) {
 
       memory[userId] =
-        memory[userId]
-          .slice(-20);
+        memory[userId].slice(-20);
     }
 
     await message.reply(reply);
@@ -354,10 +390,9 @@ Mention their titles only sometimes.
     );
 
     await message.reply(
-      'may topak servers ko ngayon 😭'
+      'may topak utak ko ngayon 😭'
     );
   }
-
 });
 
 console.log(
@@ -367,20 +402,20 @@ console.log(
 client.login(
   process.env.DISCORD_TOKEN
 )
-  .then(() => {
+.then(() => {
 
-    console.log(
-      'LOGIN SUCCESS'
-    );
+  console.log(
+    'LOGIN SUCCESS'
+  );
 
-  })
-  .catch((err) => {
+})
+.catch((err) => {
 
-    console.error(
-      'LOGIN ERROR:',
-      err
-    );
-  });
+  console.error(
+    'LOGIN ERROR:',
+    err
+  );
+});
 
 client.on(
   'error',
