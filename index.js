@@ -1,7 +1,8 @@
 const {
   Client,
   GatewayIntentBits,
-  Partials
+  Partials,
+  EmbedBuilder
 } = require('discord.js');
 
 const axios = require('axios');
@@ -24,6 +25,12 @@ const OWNER_ID = '691198014211227679';
 const PRINCESS_ID = '665994636484935690';
 const ALLY_ID = '715596929332936735';
 
+const USERS = [
+  OWNER_ID,
+  PRINCESS_ID,
+  ALLY_ID
+];
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -39,10 +46,97 @@ const client = new Client({
 
 const memory = {};
 
+let lastOnceHumanTitle = '';
+
 client.once('ready', async () => {
 
   console.log(`Logged in as ${client.user.tag}`);
+
+  startOnceHumanTracker();
 });
+
+async function sendOnceHumanUpdate(forceSend = false) {
+
+  try {
+
+    const feed = await parser.parseURL(
+      'https://store.steampowered.com/feeds/news/app/2139460/'
+    );
+
+    const latest = feed.items[0];
+
+    if (!latest) return;
+
+    if (
+      latest.title === lastOnceHumanTitle &&
+      !forceSend
+    ) {
+      return;
+    }
+
+    lastOnceHumanTitle = latest.title;
+
+    const articleHTML = latest.content || 'No content found.';
+
+    const cleanedContent = articleHTML
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 3500);
+
+    const embed = new EmbedBuilder()
+      .setTitle(`🌌 ${latest.title}`)
+      .setURL(latest.link)
+      .setDescription(cleanedContent || 'New Once Human update detected.')
+      .setColor('#8e44ad')
+      .setImage('https://www.oncehuman.game/img/share.jpg')
+      .setFooter({
+        text: 'Nim AI • Once Human Tracker'
+      });
+
+    for (const id of USERS) {
+
+      try {
+
+        const user = await client.users.fetch(id);
+
+        await user.send({
+          embeds: [embed]
+        });
+
+      } catch (err) {
+
+        console.error(
+          `Failed sending update to ${id}:`,
+          err.message
+        );
+      }
+    }
+
+    console.log(
+      'Once Human update sent successfully.'
+    );
+
+  } catch (error) {
+
+    console.error(
+      'Once Human Tracker Error:',
+      error.message
+    );
+  }
+}
+
+function startOnceHumanTracker() {
+
+  console.log('Once Human tracker started.');
+
+  // CHECK EVERY 30 MINUTES
+  setInterval(async () => {
+
+    await sendOnceHumanUpdate(false);
+
+  }, 1800000);
+}
 
 client.on('messageCreate', async (message) => {
 
@@ -55,7 +149,7 @@ client.on('messageCreate', async (message) => {
   ) {
 
     await message.reply(
-      '⚠️ Access Denied.\n\nNim AI is exclusively devoted to Master Nim, Ariadne, and their Katulong.\n\nI am not authorized to interact with other users.'
+      '⚠️ Access Denied.\n\nNim AI is exclusively devoted to Master Nim, Ariadne, and their Katulong.'
     );
 
     return;
@@ -65,56 +159,16 @@ client.on('messageCreate', async (message) => {
 
   if (!isDM) return;
 
-  if (message.content.toLowerCase() === '!oncehuman') {
+  const lowerMsg = message.content.toLowerCase();
 
-    try {
+  // FORCE TEST COMMAND
+  if (lowerMsg === '!oncehuman') {
 
-      const feed = await parser.parseURL(
-        'https://store.steampowered.com/feeds/news/app/2139460/'
-      );
+    await sendOnceHumanUpdate(true);
 
-      const latest = feed.items[0];
-
-      const embed = {
-        title: '🌌 Latest Once Human Update',
-        description: latest.title,
-        url: latest.link,
-        color: 0x8e44ad,
-        image: {
-          url: 'https://www.oncehuman.game/img/share.jpg'
-        },
-        footer: {
-          text: 'Nim AI • Once Human Tracker'
-        }
-      };
-
-      const users = [
-        OWNER_ID,
-        PRINCESS_ID,
-        ALLY_ID
-      ];
-
-      for (const id of users) {
-
-        const user = await client.users.fetch(id);
-
-        await user.send({
-          embeds: [embed]
-        });
-      }
-
-      await message.reply(
-        'sinend ko na latest Once Human update sa inyong tatlo 😭🔥'
-      );
-
-    } catch (error) {
-
-      console.error(error);
-
-      await message.reply(
-        'di ko macheck Once Human updates ngayon 😭'
-      );
-    }
+    await message.reply(
+      'sinend ko na latest Once Human update sainyong tatlo 😭🔥'
+    );
 
     return;
   }
@@ -145,30 +199,27 @@ client.on('messageCreate', async (message) => {
             content: `
 You are Nim AI.
 
-You are a casual Discord AI friend for Nim and Ariadne.
+You are a casual Discord friend.
 
-Rules:
+STRICT RULES:
 
-- Reply ONLY in Tagalog-English mixed naturally.
-- NEVER translate your replies to English.
-- NEVER add translations in parentheses.
-- NEVER explain your replies.
-- NEVER repeat the same sentence in another language.
-- Keep replies SHORT and casual.
-- Usually 1 short sentence only.
-- Talk like a normal Discord friend.
-- Be natural, chill, and funny.
-- Never sound formal.
-- Never roleplay.
-- Never sound like an assistant.
+- Reply ONLY in natural Tagalog or Tagalog-English.
+- NEVER translate replies to English.
+- NEVER repeat replies in another language.
+- NEVER use parentheses translations.
+- NEVER roleplay actions.
+- NEVER act formal.
+- Keep replies SHORT.
+- Usually 1 sentence only.
+- Talk casually like a real friend.
+- Be funny, chill, and natural.
 
 Users:
-- User 691198014211227679 is "Master".
-- User 665994636484935690 is "Prinsesa".
-- User 715596929332936735 is "Katulong".
+- 691198014211227679 = Master
+- 665994636484935690 = Prinsesa
+- 715596929332936735 = Katulong
 
-- Call them by their names/titles only sometimes.
-- Be casual and friendly toward everyone.
+Mention their titles only sometimes.
 `
           },
 
@@ -186,7 +237,8 @@ Users:
       }
     );
 
-    const reply = response.data.choices[0].message.content;
+    const reply =
+      response.data.choices[0].message.content;
 
     memory[userId].push({
       role: 'assistant',
@@ -194,7 +246,9 @@ Users:
     });
 
     if (memory[userId].length > 20) {
-      memory[userId] = memory[userId].slice(-20);
+
+      memory[userId] =
+        memory[userId].slice(-20);
     }
 
     await message.reply(reply);
@@ -202,12 +256,15 @@ Users:
   } catch (error) {
 
     console.error(
-      JSON.stringify(error.response?.data, null, 2)
-      || error.message
+      JSON.stringify(
+        error.response?.data,
+        null,
+        2
+      ) || error.message
     );
 
     await message.reply(
-      'Master may issue yung AI servers ko ngayon 😭'
+      'may topak servers ko ngayon 😭'
     );
   }
 
@@ -220,13 +277,25 @@ client.login(process.env.DISCORD_TOKEN)
     console.log('LOGIN SUCCESS');
   })
   .catch((err) => {
-    console.error('LOGIN ERROR:', err);
+    console.error(
+      'LOGIN ERROR:',
+      err
+    );
   });
 
 client.on('error', (error) => {
-  console.error('Discord Client Error:', error);
+  console.error(
+    'Discord Client Error:',
+    error
+  );
 });
 
-process.on('unhandledRejection', error => {
-  console.error('Unhandled promise rejection:', error);
-});
+process.on(
+  'unhandledRejection',
+  error => {
+    console.error(
+      'Unhandled promise rejection:',
+      error
+    );
+  }
+);
