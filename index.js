@@ -81,7 +81,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
     const rawHTML = latest.content || '';
 
-    // EXTRACT IMAGES
+    // GET ALL IMAGE URLS
     const imageMatches = [
       ...rawHTML.matchAll(
         /https?:\/\/[^\s"]+\.(?:png|jpg|jpeg|webp)/gi
@@ -102,31 +102,31 @@ async function sendOnceHumanUpdate(forceSend = false) {
       .replace(/\n\s*\n/g, '\n\n')
       .trim();
 
-    // SPLIT SECTIONS
+    // SPLIT INTO SECTIONS
     const sections = cleanText
       .split('\n\n')
       .filter(x => x.trim().length > 40);
 
-    // ONLY THESE
+    // INCLUDE ONLY THESE
     const includeKeywords = [
-  'shop',
-  'fashion',
-  'cosmetic',
-  'skin',
-  'skins',
-  'outfit',
-  'crate',
-  'makeup',
-  'vehicle skin',
-  'premium pass',
-  'meta pass',
-  'clothing',
-  'bundle',
-  'gun skin',
-  'weapon skin',
-  'lightforge',
-  'loot crate'
-];
+      'shop',
+      'fashion',
+      'cosmetic',
+      'skin',
+      'skins',
+      'outfit',
+      'crate',
+      'makeup',
+      'vehicle skin',
+      'premium pass',
+      'meta pass',
+      'clothing',
+      'bundle',
+      'gun skin',
+      'weapon skin',
+      'lightforge',
+      'loot crate'
+    ];
 
     // IGNORE THESE
     const excludeKeywords = [
@@ -149,7 +149,10 @@ async function sendOnceHumanUpdate(forceSend = false) {
       'power surge',
       'explosive',
       'survival',
-      'upgrade material'
+      'upgrade material',
+      'worldstone',
+      'teleport',
+      'respawn'
     ];
 
     // SMART FILTER
@@ -171,7 +174,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
       return hasInclude && !hasExclude;
     });
 
-    // LIMIT ONLY 5 SECTIONS
+    // LIMIT TO 5 ONLY
     const finalSections =
       filteredSections.slice(0, 5);
 
@@ -196,20 +199,32 @@ async function sendOnceHumanUpdate(forceSend = false) {
         );
 
         // SEND CLEAN FLOW
-        for (let i = 0; i < finalSections.length; i++) {
-
-          const part =
-            finalSections[i];
+        for (const part of finalSections) {
 
           if (part.length > 1800) continue;
 
           await user.send(part);
 
-          // IMAGE AFTER TEXT
-          if (imageUrls[i]) {
+          // FIND NEAREST IMAGE
+          const nearbyImage =
+            imageUrls.find(url => {
+
+              const imageIndex =
+                rawHTML.indexOf(url);
+
+              const textIndex =
+                rawHTML.indexOf(part);
+
+              return Math.abs(
+                imageIndex - textIndex
+              ) < 2500;
+            });
+
+          // SEND MATCHING IMAGE
+          if (nearbyImage) {
 
             await user.send(
-              imageUrls[i]
+              nearbyImage
             );
           }
         }
@@ -242,7 +257,7 @@ function startOnceHumanTracker() {
     'Once Human tracker started.'
   );
 
-  // EVERY 30 MINUTES
+  // CHECK EVERY 30 MINUTES
   setInterval(async () => {
 
     await sendOnceHumanUpdate(false);
