@@ -53,7 +53,7 @@ client.once('ready', async () => {
 
   startOnceHumanTracker();
 
-  // TEST SEND CURRENT UPDATE ON STARTUP
+  // TEST SEND CURRENT UPDATE
   await sendOnceHumanUpdate(true);
 });
 
@@ -81,7 +81,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
 
     const rawHTML = latest.content || '';
 
-    // EXTRACT ALL IMAGE URLS
+    // GET ALL IMAGES
     const imageMatches = [
       ...rawHTML.matchAll(
         /https?:\/\/[^\s"]+\.(?:png|jpg|jpeg|webp)/gi
@@ -92,7 +92,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
       .map(match => match[0])
       .filter(url => url.length < 2000);
 
-    // CLEAN ARTICLE TEXT
+    // CLEAN TEXT
     let cleanText = rawHTML
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<\/p>/gi, '\n\n')
@@ -105,7 +105,42 @@ async function sendOnceHumanUpdate(forceSend = false) {
     // SPLIT INTO SECTIONS
     const sections = cleanText
       .split('\n\n')
-      .filter(x => x.trim().length > 20);
+      .filter(x => x.trim().length > 40);
+
+    // COSMETIC FILTER KEYWORDS
+    const keywords = [
+      'skin',
+      'skins',
+      'outfit',
+      'fashion',
+      'cosmetic',
+      'crate',
+      'shop',
+      'weapon skin',
+      'gun skin',
+      'appearance',
+      'set',
+      'clothing',
+      'furniture',
+      'vehicle',
+      'mount',
+      'bundle',
+      'reward',
+      'pass'
+    ];
+
+    const filteredSections = sections.filter(section => {
+
+      const lower = section.toLowerCase();
+
+      return keywords.some(keyword =>
+        lower.includes(keyword)
+      );
+    });
+
+    if (filteredSections.length === 0) {
+      return;
+    }
 
     for (const id of USERS) {
 
@@ -114,21 +149,25 @@ async function sendOnceHumanUpdate(forceSend = false) {
         const user =
           await client.users.fetch(id);
 
-        // TITLE
+        // HEADER
         await user.send(
-          `🌌 **${latest.title}**\n${latest.link}`
+`🌌 **${latest.title}**
+
+✨ Fashion / Cosmetic Update Detected
+
+🔗 ${latest.link}`
         );
 
-        // ARTICLE FLOW
-        for (let i = 0; i < sections.length; i++) {
+        // SECTION FLOW
+        for (let i = 0; i < filteredSections.length; i++) {
 
-          const part = sections[i];
+          const part = filteredSections[i];
 
           if (part.length > 1900) continue;
 
           await user.send(part);
 
-          // SEND MATCHING IMAGE
+          // SEND IMAGE AFTER SECTION
           if (imageUrls[i]) {
 
             await user.send(imageUrls[i]);
@@ -145,7 +184,7 @@ async function sendOnceHumanUpdate(forceSend = false) {
     }
 
     console.log(
-      'Once Human article-style update sent successfully.'
+      'Cosmetic-focused Once Human update sent.'
     );
 
   } catch (error) {
@@ -195,7 +234,7 @@ client.on('messageCreate', async (message) => {
   const lowerMsg =
     message.content.toLowerCase();
 
-  // FORCE TEST COMMAND
+  // FORCE UPDATE TEST
   if (
     lowerMsg.includes('once human') ||
     lowerMsg === '!oncehuman'
@@ -204,7 +243,7 @@ client.on('messageCreate', async (message) => {
     await sendOnceHumanUpdate(true);
 
     await message.reply(
-      'sinend ko na latest Once Human update sainyong tatlo 😭🔥'
+      'sinend ko na latest cosmetic/fashion update sainyong tatlo 😭🔥'
     );
 
     return;
