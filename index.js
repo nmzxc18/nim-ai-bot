@@ -6,6 +6,9 @@ const {
 
 const axios = require('axios');
 const express = require('express');
+const Parser = require('rss-parser');
+
+const parser = new Parser();
 
 const app = express();
 
@@ -19,7 +22,7 @@ app.listen(3000, () => {
 
 const OWNER_ID = '691198014211227679';
 const PRINCESS_ID = '665994636484935690';
-const CHECKIN_USER_ID = '715596929332936735';
+const ALLY_ID = '715596929332936735';
 
 const client = new Client({
   intents: [
@@ -39,8 +42,6 @@ const memory = {};
 client.once('ready', async () => {
 
   console.log(`Logged in as ${client.user.tag}`);
-
-  startCheckInMessages();
 });
 
 client.on('messageCreate', async (message) => {
@@ -49,11 +50,12 @@ client.on('messageCreate', async (message) => {
 
   if (
     message.author.id !== OWNER_ID &&
-    message.author.id !== PRINCESS_ID
+    message.author.id !== PRINCESS_ID &&
+    message.author.id !== ALLY_ID
   ) {
 
     await message.reply(
-      '⚠️ Access Denied.\n\nNim AI is exclusively devoted to Master Nim and Ariadne.\n\nI am not authorized to interact with other users.'
+      '⚠️ Access Denied.\n\nNim AI is exclusively devoted to Master Nim, Ariadne, and their Katulong.\n\nI am not authorized to interact with other users.'
     );
 
     return;
@@ -62,6 +64,60 @@ client.on('messageCreate', async (message) => {
   const isDM = message.guild === null;
 
   if (!isDM) return;
+
+  if (message.content.toLowerCase() === '!oncehuman') {
+
+    try {
+
+      const feed = await parser.parseURL(
+        'https://store.steampowered.com/feeds/news/app/2139460/'
+      );
+
+      const latest = feed.items[0];
+
+      const embed = {
+        title: '🌌 Latest Once Human Update',
+        description: latest.title,
+        url: latest.link,
+        color: 0x8e44ad,
+        image: {
+          url: 'https://www.oncehuman.game/img/share.jpg'
+        },
+        footer: {
+          text: 'Nim AI • Once Human Tracker'
+        }
+      };
+
+      const users = [
+        OWNER_ID,
+        PRINCESS_ID,
+        ALLY_ID
+      ];
+
+      for (const id of users) {
+
+        const user = await client.users.fetch(id);
+
+        await user.send({
+          embeds: [embed]
+        });
+      }
+
+      await message.reply(
+        'sinend ko na latest Once Human update sa inyong tatlo 😭🔥'
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+      await message.reply(
+        'di ko macheck Once Human updates ngayon 😭'
+      );
+    }
+
+    return;
+  }
 
   try {
 
@@ -105,8 +161,14 @@ Rules:
 - Never sound formal.
 - Never roleplay.
 - Never sound like an assistant.
-- Call Nim "Master" only sometimes.
-- Call Ariadne "Prinsesa" only sometimes.
+
+Users:
+- User 691198014211227679 is "Master".
+- User 665994636484935690 is "Prinsesa".
+- User 715596929332936735 is "Katulong".
+
+- Call them by their names/titles only sometimes.
+- Be casual and friendly toward everyone.
 `
           },
 
@@ -150,32 +212,6 @@ Rules:
   }
 
 });
-
-function startCheckInMessages() {
-
-  setInterval(async () => {
-
-    try {
-
-      const user = await client.users.fetch(CHECKIN_USER_ID);
-
-      await user.send(
-        'PAKYU! Pinapasabi ni Nim'
-      );
-
-      console.log('Check-in message sent.');
-
-    } catch (error) {
-
-      console.error(
-        'Check-in error:',
-        error.message
-      );
-    }
-
-  }, 60000);
-
-}
 
 console.log('Attempting Discord login...');
 
